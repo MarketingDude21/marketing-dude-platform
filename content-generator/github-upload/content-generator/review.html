@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Review Your Content</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F1EFE9;
+  --surface:#fff;
+  --border:rgba(0,0,0,0.08);
+  --border2:rgba(0,0,0,0.14);
+  --text:#18181A;
+  --t2:#52524E;
+  --t3:#9A9A90;
+  --green:#1B6840;
+  --gbg:#EAF3EE;
+  --red:#B03232;
+  --rbg:#FDF0F0;
+  --blue:#1A4F8A;
+  --email-dark:#1C1C2E;
+  --video-dark:#0F1A2E;
+  --canva-dark:#1A1A10;
+  --amber:#7A5200;
+  --amberbg:#FDF4E0;
+  --radius:12px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
+
+/* ── TOP BAR ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(241,239,233,0.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border2);padding:10px 20px;}
+.topbar-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.brand{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);}
+.prog-wrap{display:flex;align-items:center;gap:10px;}
+.prog-text{font-size:13px;font-weight:600;color:var(--text);}
+.prog-bar{width:120px;height:5px;background:var(--border);border-radius:3px;}
+.prog-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.35s ease;}
+.approve-all-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:8px 20px;background:var(--green);color:#fff;border:none;border-radius:100px;cursor:pointer;}
+
+/* ── HERO ── */
+.page-wrap{max-width:1200px;margin:0 auto;padding:24px 16px 80px;}
+.hero{background:var(--text);color:#fff;border-radius:var(--radius);padding:24px 28px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.hero-left h1{font-size:22px;font-weight:700;margin-bottom:4px;}
+.hero-left p{font-size:13px;opacity:0.55;line-height:1.6;max-width:480px;}
+.month-badge{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,255,255,0.1);padding:6px 14px;border-radius:100px;white-space:nowrap;}
+
+/* ── CALENDAR GRID ── */
+.cal-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.cal-section-label{grid-column:1/-1;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);padding:4px 0;display:flex;align-items:center;gap:8px;}
+.cal-section-label::after{content:'';flex:1;height:1px;background:var(--border2);}
+
+/* ── CONTENT CHIPS IN CALENDAR ── */
+.content-chip{border-radius:12px;overflow:hidden;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;}
+.content-chip:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.1);}
+.content-chip.approved{border-color:rgba(27,104,64,0.3);background:#FAFDF9;}
+@media(max-width:640px){.cal-wrap{grid-template-columns:1fr;}}
+.chip-photo{width:100%;max-height:280px;object-fit:contain;display:block;background:#F0EEE9;}
+.chip-photo.email-photo{background:var(--email-dark);}
+.chip-photo.video-photo{background:var(--video-dark);min-height:80px;display:flex;align-items:center;justify-content:center;font-size:32px;}
+.chip-footer{padding:6px 8px;background:var(--surface);}
+.chip-footer.email-chip{background:var(--email-dark);}
+.chip-footer.video-chip{background:var(--video-dark);}
+.chip-footer.canva-chip{background:var(--canva-dark);}
+.chip-type{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;}
+.chip-type.social-type{color:var(--t3);}
+.chip-type.email-type{color:rgba(255,255,255,0.4);}
+.chip-type.video-type{color:rgba(255,255,255,0.4);}
+.chip-type.canva-type{color:rgba(255,255,255,0.4);}
+.chip-title{font-size:11px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chip-title.dark{color:#fff;}
+.chip-status{font-size:9px;font-weight:600;margin-top:2px;}
+.chip-status.approved{color:var(--green);}
+.chip-status.pending{color:var(--t3);}
+.chip-status.flagged{color:var(--red);}
+
+/* ── LIGHTBOX OVERLAY ── */
+.lbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.lbox{background:var(--surface);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;}
+.lbox-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;border-radius:16px 16px 0 0;}
+.lbox-type{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);}
+.lbox-close{font-size:20px;background:none;border:none;cursor:pointer;color:var(--t3);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;}
+.lbox-close:hover{background:var(--bg);}
+.lbox-photo{width:100%;max-height:300px;object-fit:contain;display:block;background:#F0EEE9;}
+.lbox-body{padding:20px;}
+.lbox-title{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.lbox-copy{font-size:15px;line-height:1.75;color:var(--text);white-space:pre-wrap;outline:none;min-height:60px;}
+.lbox-copy[contenteditable="true"]{border:1.5px solid var(--green);border-radius:8px;padding:12px;background:#FAFDF9;}
+.lbox-hint{font-size:12px;color:var(--t2);background:var(--bg);border-radius:8px;padding:8px 12px;margin-top:12px;line-height:1.6;}
+.lbox-subjects{margin-bottom:12px;}
+.lbox-subj-item{font-size:13px;color:var(--t2);padding:4px 0;border-bottom:1px solid var(--border);}
+.lbox-subj-item:last-child{border-bottom:none;}
+.lbox-email-body{font-size:14px;line-height:1.8;color:var(--t2);white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:14px;max-height:220px;overflow-y:auto;}
+
+/* ── ACTION BAR ── */
+.lbox-actions{padding:16px 20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;position:sticky;bottom:0;background:var(--surface);border-radius:0 0 16px 16px;}
+.action-row-main{display:flex;gap:8px;}
+.act-approve{flex:1;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;padding:13px;border-radius:10px;border:none;background:var(--gbg);color:var(--green);cursor:pointer;}
+.act-edit{flex:1;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;padding:13px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;}
+.act-save{flex:1;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;padding:13px;border-radius:10px;border:none;background:var(--text);color:#fff;cursor:pointer;}
+.act-approved-state{flex:1;font-size:14px;font-weight:700;padding:13px;text-align:center;color:var(--green);background:var(--gbg);border-radius:10px;}
+
+/* ── FEEDBACK ZONE ── */
+.feedback-zone{display:none;}
+.feedback-zone.open{display:block;}
+.feedback-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.feedback-input-row{display:flex;gap:8px;align-items:flex-end;}
+.feedback-ta{flex:1;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--bg);border:1.5px solid var(--border2);border-radius:10px;padding:10px 13px;outline:none;resize:none;height:64px;}
+.mic-btn-fb{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.mic-btn-fb.recording{background:#FDF0F0;border-color:var(--red);}
+.rewrite-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;border:none;background:var(--text);color:#fff;cursor:pointer;width:100%;}
+.rewrite-btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* ── PHOTO PICKER IN LIGHTBOX ── */
+.photo-picker-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.photo-picker-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;}
+.photo-opt{border-radius:8px;overflow:hidden;border:2.5px solid var(--border);cursor:pointer;position:relative;}
+.photo-opt.selected{border-color:var(--green);}
+.photo-opt img{width:100%;height:72px;object-fit:contain;display:block;background:#F0EEE9;}
+.photo-opt .check{position:absolute;top:4px;right:4px;width:18px;height:18px;background:var(--green);color:#fff;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.photo-opt.selected .check{display:flex;}
+.btn-browse-small{font-family:'DM Sans',sans-serif;font-size:12px;padding:8px;border-radius:8px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);width:100%;color:var(--t2);}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;display:flex;align-items:flex-end;justify-content:center;}
+.modal-sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:80vh;overflow-y:auto;padding:20px;}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.modal-close{font-size:20px;background:none;border:none;cursor:pointer;color:var(--t3);}
+.drive-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.drive-item{cursor:pointer;border-radius:10px;overflow:hidden;border:2px solid var(--border);}
+.drive-item img{width:100%;height:90px;object-fit:contain;display:block;background:#F0EEE9;}
+
+/* ── LOADER / DONE ── */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6rem 2rem;gap:12px;}
+.dots{display:flex;gap:5px;}
+.dots span{width:7px;height:7px;border-radius:50%;background:var(--text);animation:b 1.2s infinite;display:inline-block;}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
+@keyframes b{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.done-screen{text-align:center;padding:4rem 1rem;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .cal-body{grid-template-columns:repeat(7,1fr);}
+  .chip-photo{height:48px;}
+  .cal-cell{min-height:80px;padding:4px;}
+  .chip-footer{padding:4px 5px;}
+  .chip-title{font-size:10px;}
+  .hero{flex-direction:column;}
+  .lbox{max-width:100%;border-radius:16px 16px 0 0;}
+  .lbox-overlay{align-items:flex-end;padding:0;}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">Your Marketing Dude · Content Review</div>
+    <div class="prog-wrap">
+      <div class="prog-text" id="prog-text">0 of 0</div>
+      <div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="client-txt-btn" onclick="downloadPublishingInstructions()" disabled style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;background:var(--surface);border:1.5px solid var(--border2);color:var(--t3);border-radius:100px;cursor:not-allowed;opacity:0.4;">⬇ TXT</button>
+      <button id="docx-btn-top" onclick="downloadWordDoc()" disabled style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;background:var(--surface);border:1.5px solid var(--border2);color:var(--t3);border-radius:100px;cursor:not-allowed;opacity:0.4;">⬇ Word</button>
+      <button class="approve-all-btn" onclick="approveAllClient()">Approve All ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <div id="loader" class="loader">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div style="font-size:14px;color:var(--t2);">Loading your content...</div>
+  </div>
+  <div id="main" style="display:none;">
+    <div class="hero">
+      <div class="hero-left">
+        <h1 id="hero-title">Your Content Is Ready</h1>
+        <p>Tap any post to read the full copy, swap the photo, and approve — or tell us what to change. The more you engage, the better it gets every month.</p>
+      </div>
+      <div class="month-badge" id="month-badge">August 2026</div>
+    </div>
+    <div class="cal-wrap" id="cal-wrap"></div>
+    <!-- Photo scan section sits here in DOM flow — after cal-wrap, which means after Canva when grid renders -->
+    <div id="photo-scan-section" style="margin-top:24px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;display:none;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">📸 Add Posts From Photos</div>
+          <div style="font-size:13px;color:var(--t2);line-height:1.6;" id="scan-status-client">No matching photo for a post? We can scan your photo library and write a caption in your voice.</div>
+        </div>
+        <button onclick="clientScanPhotos()" id="scan-btn-client" style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 18px;background:var(--text);color:#fff;border:none;border-radius:10px;cursor:pointer;flex-shrink:0;">Scan Photos →</button>
+      </div>
+      <div id="scan-results-client" style="margin-top:16px;"></div>
+    </div>
+    <div id="done-screen" class="done-screen" style="display:none;">
+      <div style="font-size:56px;margin-bottom:16px;">✓</div>
+      <h2 style="font-size:24px;font-weight:700;margin-bottom:10px;">You're all set!</h2>
+      <p style="font-size:14px;color:var(--t2);line-height:1.7;max-width:360px;margin:0 auto 24px;">Your feedback is saved. Here are your publishing instructions — download and you're ready to post.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="downloadPublishingInstructions()" style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:12px 20px;background:var(--text);color:#fff;border:none;border-radius:10px;cursor:pointer;">⬇ Text File</button>
+        <button id="docx-btn" onclick="downloadWordDoc()" style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:12px 20px;background:var(--green);color:#fff;border:none;border-radius:10px;cursor:pointer;">⬇ Word Doc</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://rnueeudmtoszxpvxoozf.supabase.co';
+const SB_KEY = 'sb_publishable_KA-8n4wDya8RXu3IfM_c-A_lLj8DpHt';
+var sb = null, agentId = null, batchId = null, agentData = null;
+var posts = [], emails = [], agentPhotos = [];
+var reviewed = 0, total = 0, currentPhotoTarget = null;
+
+// Toast notification — used across all functions
+var _toastTimer = null;
+function toast(msg) {
+  if (_toastTimer) clearTimeout(_toastTimer);
+  var el = document.getElementById('toast-msg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast-msg';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#18181A;color:#fff;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;padding:10px 20px;border-radius:100px;z-index:99999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.opacity = '1';
+  _toastTimer = setTimeout(function(){ el.style.opacity = '0'; setTimeout(function(){ el.style.display = 'none'; }, 300); }, 3500);
+}
+var batchNotifySent = false;
+var activePostId = null; // currently open lightbox
+var fbRecog = null, fbRecording = false, fbUserStopped = false;
+
+function stopFbMic() {
+  fbUserStopped = true;
+  fbRecording = false;
+  if (fbRecog) { try { fbRecog.stop(); } catch(e) {} fbRecog = null; }
+}
+
+function getParams() {
+  var p = new URLSearchParams(window.location.search);
+  agentId = p.get('agent');
+  batchId = p.get('batch');
+}
+
+window.addEventListener('DOMContentLoaded', async function() {
+  try {
+    if (!window.supabase) throw new Error('Supabase SDK failed to load');
+    sb = window.supabase.createClient(SB_URL, SB_KEY);
+  } catch(e) {
+    document.getElementById('loader').innerHTML = '<div style="text-align:center;color:var(--red);font-size:14px;padding:2rem;">Failed to initialize: ' + e.message + '<br/>Please refresh the page.</div>';
+    return;
+  }
+  getParams();
+  if (!agentId || !batchId) {
+    document.getElementById('loader').innerHTML = '<div style="text-align:center;color:var(--red);font-size:14px;line-height:1.6;">Invalid review link.<br/>Please ask for a fresh one.</div>';
+    return;
+  }
+  await loadContent();
+});
+
+// ── CONTENT LOADING ──────────────────────────────────────────────────────────
+async function loadContent() {
+  try {
+    if (!sb) throw new Error('Database not initialized — please refresh');
+    var ar = await sb.from('agents').select('*').eq('id', agentId).single();
+    if (ar.error) throw ar.error;
+    agentData = ar.data;
+
+    var pr = await sb.from('generated_posts').select('*').eq('agent_id', agentId).eq('batch_id', batchId).order('post_order', {ascending: true});
+    if (pr.error) throw pr.error;
+    posts = (pr.data || []).filter(function(p){ return p.post_type === 'post' || p.post_type === 'video'; });
+    emails = (pr.data || []).filter(function(p){ return p.post_type === 'email'; });
+    total = posts.length + emails.length;
+
+    if (!total) {
+      document.getElementById('loader').innerHTML = '<div style="text-align:center;color:var(--red);font-size:14px;line-height:1.6;">This review link no longer has content tied to it.<br/>Please ask for a fresh one.</div>';
+      return;
+    }
+
+    try { batchNotifySent = localStorage.getItem('notified-' + batchId) === '1'; } catch(e) {}
+
+    // Load agent photos — handle both old {files} and new {files, usedFolderId} response shapes
+    agentPhotos = [];
+    if (agentData.photo_folder_id) {
+      try {
+        var dr = await fetch('/api/drive-photos', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ folderId: agentData.photo_folder_id }) });
+        var dd = await dr.json();
+        var fileList = dd.files || dd.data || [];
+        if (dr.ok && fileList.length) {
+          var tagR = await sb.from('agent_photos').select('*').eq('agent_id', agentId);
+          var tagMap = {};
+          if (!tagR.error && tagR.data) tagR.data.forEach(function(t){ tagMap[t.drive_file_id] = t.tags; });
+          agentPhotos = fileList.map(function(f){ return { drive_file_id: f.id, file_name: f.name, tags: tagMap[f.id] || '', isVideo: f.isVideo }; });
+        }
+      } catch(e) { console.log('Photo load error:', e.message); }
+    }
+
+    var month = pr.data[0] ? pr.data[0].month : '';
+    document.getElementById('hero-title').textContent = agentData.name.split(' ')[0] + ' — Your ' + month + ' Content';
+    document.getElementById('month-badge').textContent = month;
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    if (agentData.photo_folder_id) {
+      document.getElementById('photo-scan-section').style.display = 'block';
+    }
+
+    try {
+      buildCalendar(month);
+    } catch(calErr) {
+      console.error('buildCalendar error:', calErr.message, calErr.stack);
+      document.getElementById('cal-wrap').innerHTML = '<div style="padding:2rem;color:var(--red);font-size:13px;">Error rendering calendar: ' + calErr.message + '</div>';
+    }
+    updateProgress();
+  } catch(err) {
+    console.error('loadContent error:', err);
+    document.getElementById('loader').innerHTML = '<div style="text-align:center;color:var(--red);font-size:14px;padding:2rem;">Error loading content: ' + err.message + '<br/><br/><small>Check the URL and try again.</small></div>';
+  }
+}
+
+// ── CALENDAR BUILDER ─────────────────────────────────────────────────────────
+var DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function classifyContent(item) {
+  if (item.post_type === 'email') return 'email';
+  if (item.post_type === 'video') return 'video';
+  var title = (item.post_title || '').toLowerCase();
+  if (/^video/.test(title) || /video script/.test(title)) return 'video';
+  if (item.canva_link) return 'canva';
+  return 'social';
+}
+
+function buildCalendar(month) {
+  var wrap = document.getElementById('cal-wrap');
+  wrap.innerHTML = '';
+  try {
+  var allItems = posts.concat(emails);
+  if (!allItems.length) {
+    wrap.innerHTML = '<div style="grid-column:1/-1;padding:2rem;text-align:center;color:var(--t3);">No content found.</div>';
+    return;
+  }
+
+  var socials = allItems.filter(function(p){ return classifyContent(p) === 'social'; });
+  var canvas  = allItems.filter(function(p){ return classifyContent(p) === 'canva'; });
+  var vids    = allItems.filter(function(p){ return classifyContent(p) === 'video'; });
+  var emailItems = allItems.filter(function(p){ return classifyContent(p) === 'email'; });
+
+  function sectionLbl(text) {
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'grid-column:1/-1;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);padding:4px 0;display:flex;align-items:center;gap:8px;margin-top:8px;';
+    lbl.innerHTML = text + '<span style="flex:1;height:1px;background:var(--border2);display:inline-block;"></span>';
+    wrap.appendChild(lbl);
+  }
+
+  function fillGrid(items, cols) {
+    items.forEach(function(item) { wrap.appendChild(buildChip(item, cols)); });
+    var rem = items.length % cols;
+    if (rem) for (var s = 0; s < cols - rem; s++) wrap.appendChild(document.createElement('div'));
+  }
+
+  function twoColSection(label, items) {
+    var section = document.createElement('div');
+    section.style.cssText = 'grid-column:1/-1;';
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);padding:4px 0;display:flex;align-items:center;gap:8px;margin-top:8px;margin-bottom:12px;';
+    lbl.innerHTML = label + '<span style="flex:1;height:1px;background:var(--border2);display:inline-block;"></span>';
+    section.appendChild(lbl);
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:16px;';
+    items.forEach(function(item) { grid.appendChild(buildChip(item, 2)); });
+    if (items.length % 2) grid.appendChild(document.createElement('div'));
+    section.appendChild(grid);
+    wrap.appendChild(section);
+  }
+
+  // Order: Social → Canva → Emails → Video Scripts
+  if (socials.length) { sectionLbl('Social Posts (' + socials.length + ')'); fillGrid(socials, 3); }
+  if (canvas.length)  { sectionLbl('Predesigned Canva Templates (' + canvas.length + ')'); fillGrid(canvas, 3); }
+  if (emailItems.length) twoColSection('Emails (' + emailItems.length + ')', emailItems);
+  if (vids.length)    twoColSection('Video Scripts (' + vids.length + ')', vids);
+  } catch(err) {
+    console.error('buildCalendar crash:', err);
+    wrap.innerHTML = '<div style="grid-column:1/-1;padding:2rem;text-align:center;color:red;font-size:13px;">Error rendering content: ' + err.message + '</div>';
+  }
+}
+
+function buildChip(item, cols) {
+  try {
+  var type = classifyContent(item);
+  var status = item.agent_status || 'pending';
+  var isDark = type === 'email' || type === 'video';
+  var copyText = item.copy || '';
+
+  var chip = document.createElement('div');
+  chip.className = 'content-chip' + (status === 'approved' ? ' approved' : '');
+  chip.id = 'chip-' + item.id;
+  chip.style.cssText = 'border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;' +
+    'border:1px solid ' + (status === 'approved' ? 'rgba(27,104,64,0.3)' : 'var(--border)') + ';' +
+    'background:var(--surface);';
+  chip.onclick = function() { openLightbox(item.id); };
+
+  // Photo for social/canva
+  if ((type === 'social' || type === 'canva') && agentPhotos.length) {
+    var photo = getChipPhoto(item, type);
+    if (photo) {
+      var img = document.createElement('img');
+      img.style.cssText = 'width:100%;max-height:220px;object-fit:contain;display:block;background:#F0EEE9;';
+      img.src = photo;
+      img.onerror = function(){ this.style.display='none'; };
+      chip.appendChild(img);
+    }
+  }
+
+  // Header strip
+  var hdr = document.createElement('div');
+  var bgCol = type === 'email' ? '#1C1C2E' : type === 'video' ? '#0F1A2E' : 'transparent';
+  hdr.style.cssText = 'padding:8px 12px;border-bottom:1px solid ' + (isDark ? 'rgba(255,255,255,0.08)' : 'var(--border)') + ';' +
+    'display:flex;align-items:center;justify-content:space-between;' + (isDark ? 'background:' + bgCol + ';' : '');
+  var typeLabel = type === 'email' ? 'Email' : type === 'video' ? 'Video Script' : type === 'canva' ? 'Canva Template' : 'Social Post';
+  hdr.innerHTML =
+    '<span style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;' + (isDark ? 'color:rgba(255,255,255,0.35)' : 'color:var(--t3)') + ';">' + typeLabel + '</span>' +
+    '<span style="font-size:10px;font-weight:600;' +
+      (status === 'approved' ? 'color:var(--green)' : (isDark ? 'color:rgba(255,255,255,0.25)' : 'color:var(--t3)')) + ';">' +
+      (status === 'approved' ? '✓ Approved' : 'Tap to review') + '</span>';
+  chip.appendChild(hdr);
+
+  // Body
+  var body = document.createElement('div');
+  body.style.cssText = 'padding:12px;flex:1;' + (isDark ? 'background:' + bgCol + ';' : '');
+
+  // Email subjects
+  if (type === 'email') {
+    var subj = [];
+    try { subj = JSON.parse(item.subjects || '[]'); } catch(ex) {}
+    if (subj.length) {
+      var sd = document.createElement('div');
+      sd.style.cssText = 'margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);';
+      var sl = document.createElement('div');
+      sl.style.cssText = 'font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px;';
+      sl.textContent = 'Subject Lines';
+      sd.appendChild(sl);
+      subj.forEach(function(s) {
+        var se = document.createElement('div');
+        se.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.5);padding:2px 0;';
+        se.textContent = '→ ' + s;
+        sd.appendChild(se);
+      });
+      body.appendChild(sd);
+    }
+  }
+
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:11px;font-weight:700;margin-bottom:6px;' + (isDark ? 'color:rgba(255,255,255,0.4)' : 'color:var(--t3)');
+  title.textContent = item.post_title || '';
+  body.appendChild(title);
+
+  var copy = document.createElement('div');
+  copy.style.cssText = 'font-size:13px;line-height:1.7;white-space:pre-wrap;' + (isDark ? 'color:rgba(255,255,255,0.8)' : 'color:var(--t2)');
+  copy.textContent = copyText;
+  body.appendChild(copy);
+
+  if (item.canva_link) {
+    var cl = document.createElement('a');
+    cl.href = item.canva_link; cl.target = '_blank';
+    cl.style.cssText = 'font-size:11px;color:var(--blue);display:block;margin-top:8px;';
+    cl.textContent = '🎨 Open Canva template →';
+    cl.onclick = function(e){ e.stopPropagation(); };
+    body.appendChild(cl);
+  }
+
+  // Email: show attached photos if any were selected
+  if (type === 'email' && item.selected_photo_id) {
+    var emailPhotos = [];
+    try {
+      if (item.selected_photo_id.startsWith('[')) {
+        emailPhotos = JSON.parse(item.selected_photo_id);
+      }
+    } catch(ex) {}
+    if (emailPhotos.length) {
+      var photoStrip = document.createElement('div');
+      photoStrip.style.cssText = 'margin-top:10px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;';
+      var photoLbl = document.createElement('div');
+      photoLbl.style.cssText = 'font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px;';
+      photoLbl.textContent = 'Email photos (' + emailPhotos.length + ')';
+      photoStrip.appendChild(photoLbl);
+      var photoRow = document.createElement('div');
+      photoRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
+      emailPhotos.forEach(function(ph) {
+        var thumb = document.createElement('img');
+        var src = ph.drive_file_id
+          ? 'https://drive.google.com/thumbnail?id=' + ph.drive_file_id + '&sz=w100'
+          : (ph.thumb || ph.url || '');
+        if (src) {
+          thumb.src = src;
+          thumb.style.cssText = 'width:60px;height:50px;object-fit:cover;border-radius:6px;background:#333;';
+          thumb.onerror = function(){ this.style.display='none'; };
+          thumb.onclick = function(e){ e.stopPropagation(); };
+          photoRow.appendChild(thumb);
+        }
+      });
+      photoStrip.appendChild(photoRow);
+      body.appendChild(photoStrip);
+    }
+  }
+
+  chip.appendChild(body);
+
+  // Footer — direct approve button + edit link, no lightbox required for basic approval
+  var foot = document.createElement('div');
+  foot.id = 'chip-foot-' + item.id;
+  foot.style.cssText = 'padding:8px 12px;border-top:1px solid ' + (isDark ? 'rgba(255,255,255,0.08)' : 'var(--border)') + ';' +
+    'display:flex;align-items:center;gap:8px;' + (isDark ? 'background:' + bgCol + ';' : '');
+
+  if (status === 'approved') {
+    foot.innerHTML = '<span style="font-size:12px;font-weight:700;color:var(--green);flex:1;">✓ Approved</span>' +
+      '<span onclick="openLightbox(\'' + item.id + '\')" style="font-size:11px;cursor:pointer;' + (isDark ? 'color:rgba(255,255,255,0.3)' : 'color:var(--t3)') + ';">Edit ›</span>';
+  } else {
+    // Approve button right on the card — no lightbox needed
+    var appBtn = document.createElement('button');
+    appBtn.style.cssText = 'font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;border:none;' +
+      'background:var(--gbg);color:var(--green);cursor:pointer;flex:1;';
+    appBtn.textContent = '✓ Looks good';
+    appBtn.onclick = function(e) {
+      e.stopPropagation();
+      approve(item.id);
+      // Update footer immediately without rebuilding whole chip
+      foot.innerHTML = '<span style="font-size:12px;font-weight:700;color:var(--green);flex:1;">✓ Approved</span>' +
+        '<span onclick="openLightbox(\'' + item.id + '\')" style="font-size:11px;cursor:pointer;' + (isDark ? 'color:rgba(255,255,255,0.3)' : 'color:var(--t3)') + ';">Edit ›</span>';
+      chip.style.borderColor = 'rgba(27,104,64,0.3)';
+      // Update header status
+      var hdrSpan = hdr.querySelector('span:last-child');
+      if (hdrSpan) { hdrSpan.textContent = '✓ Approved'; hdrSpan.style.color = 'var(--green)'; }
+    };
+    foot.appendChild(appBtn);
+
+    var editLink = document.createElement('span');
+    editLink.textContent = 'Edit ›';
+    editLink.style.cssText = 'font-size:11px;cursor:pointer;' + (isDark ? 'color:rgba(255,255,255,0.3)' : 'color:var(--t3)');
+    editLink.onclick = function(e) { e.stopPropagation(); openLightbox(item.id); };
+    foot.appendChild(editLink);
+  }
+
+  chip.appendChild(foot);
+  return chip;
+  } catch(err) {
+    console.error('buildChip crash on item:', item && item.post_title, err.message);
+    var errDiv = document.createElement('div');
+    errDiv.style.cssText = 'border:1px solid #eee;border-radius:8px;padding:12px;font-size:12px;color:#999;';
+    errDiv.textContent = (item && item.post_title) || 'Content item';
+    return errDiv;
+  }
+}
+
+
+function getChipPhoto(item, type) {
+  if (item.selected_photo_id && typeof item.selected_photo_id === 'string' && !item.selected_photo_id.startsWith('[')) {
+    return 'https://drive.google.com/thumbnail?id=' + item.selected_photo_id + '&sz=w200';
+  }
+  if (agentPhotos.length && (type === 'social' || type === 'canva')) {
+    var seed = posts.indexOf(item);
+    if (seed < 0) seed = Math.abs(item.id ? item.id.charCodeAt(0) : 0); // stable non-negative seed
+    var photo = agentPhotos[seed % agentPhotos.length];
+    if (!photo) photo = agentPhotos[0];
+    if (photo && photo.drive_file_id && !item.selected_photo_id) {
+      item.selected_photo_id = photo.drive_file_id;
+      if (sb && item.id && typeof item.id === 'string' && item.id.length > 20) {
+        sb.from('generated_posts').update({ selected_photo_id: photo.drive_file_id }).eq('id', item.id).then(function(){}).catch(function(){});
+      }
+    }
+    return photo && photo.drive_file_id ? 'https://drive.google.com/thumbnail?id=' + photo.drive_file_id + '&sz=w200' : null;
+  }
+  return null;
+}
+
+// ── LIGHTBOX ─────────────────────────────────────────────────────────────────
+function openLightbox(postId) {
+  var item = posts.find(function(p){ return p.id === postId; }) ||
+             emails.find(function(e){ return e.id === postId; });
+  if (!item) return;
+  activePostId = postId;
+  var type = classifyContent(item);
+
+  var overlay = document.createElement('div');
+  overlay.className = 'lbox-overlay';
+  overlay.id = 'lbox-overlay';
+  overlay.onclick = function(ev) { if (ev.target === overlay) closeLightbox(); };
+
+  var box = document.createElement('div');
+  box.className = 'lbox';
+  box.id = 'lbox';
+
+  var status = item.agent_status || 'pending';
+
+  // Head
+  var typeLabel = type === 'email' ? 'Email' : type === 'video' ? 'Video Script' : type === 'canva' ? 'Social Post (Canva)' : 'Social Post';
+  box.innerHTML =
+    '<div class="lbox-head">' +
+      '<div>' +
+        '<div class="lbox-type">' + typeLabel + '</div>' +
+        '<div style="font-size:15px;font-weight:600;margin-top:2px;">' + (item.post_title || '') + '</div>' +
+      '</div>' +
+      '<button class="lbox-close" onclick="closeLightbox()">✕</button>' +
+    '</div>';
+
+  // Content area
+  var bodyDiv = document.createElement('div');
+  bodyDiv.className = 'lbox-body';
+
+  if (type === 'email') {
+    var subjects = [];
+    try { subjects = JSON.parse(item.subjects || '[]'); } catch(ex) {}
+    var emailHtml = '';
+    if (subjects.length) {
+      emailHtml += '<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;">Subject line options</div>';
+      emailHtml += '<div class="lbox-subjects">';
+      subjects.forEach(function(s){ emailHtml += '<div class="lbox-subj-item">' + s + '</div>'; });
+      emailHtml += '</div>';
+    }
+    emailHtml += '<div class="lbox-email-body" id="lbox-copy-' + postId + '">' + (item.copy || '') + '</div>';
+    bodyDiv.innerHTML = emailHtml;
+  } else {
+    // Photo — show for all non-email types
+    var photoId = (item.selected_photo_id && !item.selected_photo_id.startsWith('[')) ? item.selected_photo_id : null;
+    if (!photoId && agentPhotos.length) {
+      var idx = posts.indexOf(item);
+      if (idx < 0) idx = 0; // fallback to first photo if item not found in posts
+      var photoEntry = agentPhotos[idx % agentPhotos.length];
+      if (photoEntry) photoId = photoEntry.drive_file_id;
+    }
+    if (photoId) {
+      var photoImg = document.createElement('img');
+      photoImg.className = 'lbox-photo';
+      photoImg.src = 'https://drive.google.com/thumbnail?id=' + photoId + '&sz=w600';
+      photoImg.onerror = function(){ this.src = 'https://drive.google.com/thumbnail?id=' + photoId + '&sz=w600'; };
+      box.appendChild(photoImg);
+    }
+
+    // Always show photo picker — even if no photo currently set
+    var picker = buildLboxPhotoPicker(postId, photoId);
+    box.appendChild(picker);
+
+    // Copy — inline editable
+    bodyDiv.innerHTML =
+      '<div class="lbox-title">' + (item.post_title || 'Post') + '</div>' +
+      '<div class="lbox-copy" id="lbox-copy-' + postId + '" spellcheck="true">' + (item.copy || '') + '</div>' +
+      (item.image_direction ? '<div class="lbox-hint">📸 ' + item.image_direction + '</div>' : '') +
+      (item.canva_link ? '<div style="margin-top:10px;"><a href="' + item.canva_link + '" target="_blank" style="font-size:12px;color:var(--blue);">🎨 View Canva template →</a></div>' : '');
+  }
+
+  box.appendChild(bodyDiv);
+
+  // Action bar
+  var actions = document.createElement('div');
+  actions.className = 'lbox-actions';
+  actions.id = 'lbox-actions-' + postId;
+  actions.innerHTML = buildActionHTML(postId, status, type);
+  box.appendChild(actions);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function buildActionHTML(postId, status, type) {
+  var mainRow = '';
+  if (status === 'approved') {
+    mainRow = '<div class="action-row-main">' +
+      '<div class="act-approved-state">✓ Approved</div>' +
+      '<button class="act-edit" onclick="undoApprove(\'' + postId + '\')">Change</button>' +
+    '</div>';
+  } else {
+    mainRow = '<div class="action-row-main">' +
+      '<button class="act-approve" onclick="approve(\'' + postId + '\')">✓ Sounds like me</button>' +
+      '<button class="act-edit" id="lbox-edit-btn-' + postId + '" onclick="toggleEdit(\'' + postId + '\',' + (type === 'email' ? 'true' : 'false') + ')">✏ Edit</button>' +
+    '</div>';
+  }
+
+  var feedbackZone = '<div class="feedback-zone" id="lbox-fb-' + postId + '">' +
+    '<div class="feedback-label" style="margin-top:12px;">Tell us what to change — or edit directly above</div>' +
+    '<div class="feedback-input-row">' +
+      '<textarea class="feedback-ta" id="lbox-ft-' + postId + '" placeholder="Too formal, too long, I\'d never say that..."></textarea>' +
+      '<button class="mic-btn-fb" id="lbox-mic-' + postId + '" onclick="toggleFbMic(\'' + postId + '\')" title="Speak your feedback">🎤</button>' +
+    '</div>' +
+    '<button class="rewrite-btn" id="lbox-submit-' + postId + '" onclick="submitFeedback(\'' + postId + '\')">Rewrite It For Me →</button>' +
+  '</div>';
+
+  return mainRow + feedbackZone;
+}
+
+function buildLboxPhotoPicker(postId, currentPhotoId) {
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:12px 20px 0;';
+
+  var label = document.createElement('div');
+  label.className = 'photo-picker-label';
+  label.textContent = 'Swap photo';
+  wrap.appendChild(label);
+
+  if (agentPhotos.length) {
+    var grid = document.createElement('div');
+    grid.className = 'photo-picker-row';
+    agentPhotos.slice(0, 6).forEach(function(ph) {
+      var opt = document.createElement('div');
+      opt.className = 'photo-opt' + (ph.drive_file_id === currentPhotoId ? ' selected' : '');
+      var thumb = 'https://drive.google.com/thumbnail?id=' + ph.drive_file_id + '&sz=w200';
+      var fb = 'https://drive.google.com/thumbnail?id=' + ph.drive_file_id + '&sz=w200';
+      opt.innerHTML = '<img src="' + thumb + '" data-fb="' + fb + '" onerror="this.src=this.dataset.fb"/><div class="check">✓</div>';
+      opt.onclick = function() {
+        grid.querySelectorAll('.photo-opt').forEach(function(o){ o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        var mainImg = document.querySelector('.lbox-photo');
+        if (mainImg) {
+          mainImg.src = 'https://drive.google.com/thumbnail?id=' + ph.drive_file_id + '&sz=w600';
+          mainImg.onerror = function(){ this.src = fb; };
+        }
+        savePostPhoto(postId, ph.drive_file_id);
+      };
+      grid.appendChild(opt);
+    });
+    wrap.appendChild(grid);
+  }
+
+  // Buttons row — browse all + pick as many as you want, no restrictions
+  var btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;';
+
+  var browseBtn = document.createElement('button');
+  browseBtn.className = 'btn-browse-small';
+  browseBtn.textContent = '📁 Browse all my photos';
+  browseBtn.onclick = function(){ browseAllPhotos(postId, false); };
+  btns.appendChild(browseBtn);
+
+  wrap.appendChild(btns);
+  return wrap;
+}
+
+function closeLightbox() {
+  var ov = document.getElementById('lbox-overlay');
+  if (ov) ov.remove();
+  stopFbMic();
+  fbUserStopped = false;
+  fbRecording = false;
+  activePostId = null;
+}
+
+// ── INLINE EDIT ───────────────────────────────────────────────────────────────
+var editingPostId = null;
+
+function toggleEdit(postId, isEmail) {
+  var copyEl = document.getElementById('lbox-copy-' + postId);
+  var fbZone = document.getElementById('lbox-fb-' + postId);
+  var editBtn = document.getElementById('lbox-edit-btn-' + postId);
+  var actionsEl = document.getElementById('lbox-actions-' + postId);
+  if (!copyEl) return;
+
+  if (editingPostId === postId) {
+    // Already editing — save
+    saveInlineEdit(postId);
+  } else {
+    editingPostId = postId;
+    if (!isEmail) {
+      copyEl.contentEditable = 'true';
+      copyEl.focus();
+      // Move cursor to end
+      var range = document.createRange();
+      range.selectNodeContents(copyEl);
+      range.collapse(false);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    if (editBtn) editBtn.textContent = '💾 Save';
+    // Show feedback zone
+    if (fbZone) fbZone.classList.add('open');
+  }
+}
+
+async function saveInlineEdit(postId) {
+  var copyEl = document.getElementById('lbox-copy-' + postId);
+  var editBtn = document.getElementById('lbox-edit-btn-' + postId);
+  if (!copyEl) return;
+
+  var newCopy = copyEl.innerText.trim();
+  copyEl.contentEditable = 'false';
+  if (editBtn) editBtn.textContent = '✏ Edit';
+  editingPostId = null;
+
+  // Save to Supabase
+  if (sb && postId) {
+    try {
+      await sb.from('generated_posts').update({ copy: newCopy, agent_status: 'flagged' }).eq('id', postId);
+      // Log as feedback for learning
+      var item = posts.find(function(p){ return p.id === postId; }) || emails.find(function(e){ return e.id === postId; });
+      if (item && agentData) {
+        await sb.from('feedback_history').insert([{
+          agent_id: agentData.id,
+          post_title: item.post_title,
+          original_copy: item.copy,
+          feedback: '(client edited directly)',
+          rewritten_copy: newCopy,
+          month: item.month || '',
+          created_at: new Date().toISOString()
+        }]);
+        item.copy = newCopy;
+      }
+      toast('Saved ✓');
+    } catch(e) { toast('Could not save: ' + e.message); }
+  }
+}
+
+// ── VOICE FEEDBACK MIC ────────────────────────────────────────────────────────
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function toggleFbMic(postId) {
+  if (!SR) { toast('Voice input not available in this browser'); return; }
+  if (fbRecording) { stopFbMic(); return; }
+  var micBtn = document.getElementById('lbox-mic-' + postId);
+  var ta = document.getElementById('lbox-ft-' + postId);
+  if (!ta) return;
+  startFbRecognition(postId, ta.value);
+}
+
+function startFbRecognition(postId, baseText) {
+  if (!SR) return;
+  var micBtn = document.getElementById('lbox-mic-' + postId);
+  var ta = document.getElementById('lbox-ft-' + postId);
+  if (!ta) return;
+
+  fbRecog = new SR();
+  fbRecog.continuous = true;
+  fbRecog.interimResults = true;
+  fbRecog.lang = 'en-US';
+  var finalTranscript = '';
+
+  fbRecog.onstart = function() {
+    fbRecording = true;
+    if (micBtn) { micBtn.classList.add('recording'); micBtn.textContent = '⏹'; }
+  };
+  fbRecog.onresult = function(e) {
+    var interim = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    ta.value = baseText + finalTranscript + interim;
+  };
+  fbRecog.onend = function() {
+    // Auto-restart unless the user tapped stop
+    if (fbRecording && !fbUserStopped) {
+      baseText = baseText + finalTranscript;
+      finalTranscript = '';
+      try { startFbRecognition(postId, baseText); return; } catch(e) {}
+    }
+    fbRecording = false;
+    if (micBtn) { micBtn.classList.remove('recording'); micBtn.textContent = '🎤'; }
+  };
+  fbRecog.onerror = function(e) {
+    if (e.error !== 'no-speech') {
+      fbRecording = false;
+      if (micBtn) { micBtn.classList.remove('recording'); micBtn.textContent = '🎤'; }
+    }
+  };
+  fbUserStopped = false;
+  fbRecog.start();
+}
+
+function stopFbMic() {
+  if (fbRecog) { try { fbRecog.stop(); } catch(e) {} fbRecog = null; }
+  fbRecording = false;
+}
+
+// ── APPROVE / FLAG ───────────────────────────────────────────────────────────
+async function approve(postId) {
+  if (editingPostId === postId) await saveInlineEdit(postId);
+  var item = posts.find(function(p){ return p.id === postId; }) || emails.find(function(e){ return e.id === postId; });
+  var wasReviewed = !!(item && item.agent_status);
+  await sb.from('generated_posts').update({ agent_status:'approved', agent_reviewed_at: new Date().toISOString() }).eq('id', postId);
+  if (item) item.agent_status = 'approved';
+  if (!wasReviewed) { reviewed++; }
+  updateProgress();
+  checkBatchCompleteAndNotify();
+  // Update lightbox if open
+  var actEl = document.getElementById('lbox-actions-' + postId);
+  if (actEl) {
+    var type = item ? classifyContent(item) : 'social';
+    actEl.innerHTML = buildActionHTML(postId, 'approved', type);
+  }
+  // Note: don't call rebuildChip here — the card footer onclick already updates inline
+  // rebuildChip is only needed when approving from lightbox (no inline update available)
+  if (actEl) rebuildChip(postId); // only rebuild if coming from lightbox
+}
+
+function undoApprove(postId) {
+  var item = posts.find(function(p){ return p.id === postId; }) || emails.find(function(e){ return e.id === postId; });
+  if (item) item.agent_status = null;
+  if (reviewed > 0) reviewed--;
+  sb.from('generated_posts').update({ agent_status: null }).eq('id', postId).then(function(){});
+  var type = item ? classifyContent(item) : 'social';
+  var actEl = document.getElementById('lbox-actions-' + postId);
+  if (actEl) actEl.innerHTML = buildActionHTML(postId, 'pending', type);
+  rebuildChip(postId);
+  updateProgress();
+}
+
+// Strip VISUAL ASSETS and instruction blocks from email body before export
+function cleanEmailBody(text) {
+  if (!text) return '';
+  return text
+    .replace(/---+\s*\n*VISUAL ASSETS[\s\S]*/i, '')
+    .replace(/#+\s*VISUAL ASSETS[\s\S]*/i, '')
+    .replace(/VISUAL ASSETS[\s\S]*/i, '')
+    .replace(/\*\*Image Idea[\s\S]*/i, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+async function downloadWordDoc() {
+  var agentName = agentData ? agentData.name : 'Agent';
+  var month = posts[0] ? posts[0].month : (emails[0] ? emails[0].month : '');
+
+  ['docx-btn', 'docx-btn-top'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) { btn.textContent = 'Generating...'; btn.disabled = true; }
+  });
+
+  try {
+    // Build payload with photos on every post
+    var docxPosts = posts.map(function(p) {
+      var photoId = p.selected_photo_id && !p.selected_photo_id.startsWith('[') ? p.selected_photo_id : null;
+      return {
+        post_title: p.post_title,
+        copy: p.copy || '',
+        selected_photo_id: photoId,
+        canva_link: p.canva_link || null,
+        post_type: p.post_type || 'post'
+      };
+    });
+    var docxEmails = emails.map(function(e) {
+      // Parse email selected photos
+      var emailPhotos = [];
+      try { emailPhotos = JSON.parse(e.selected_photo_id || '[]'); } catch(ex) {}
+      return {
+        post_title: e.post_title,
+        copy: cleanEmailBody(e.copy || ''),
+        subjects: e.subjects || '[]',
+        email_photos: emailPhotos,
+        post_type: 'email'
+      };
+    });
+
+    var res = await fetch('/api/generate-docx', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agentName, month, posts: docxPosts, emails: docxEmails, videos: [] })
+    });
+    if (!res.ok) throw new Error('Could not generate Word doc');
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = agentName.replace(/\s+/g,'-') + '-' + month.replace(/\s+/g,'-') + '-Publishing-Instructions.docx';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+    toast('Word doc downloaded ✓');
+  } catch(e) {
+    toast('Could not generate Word doc: ' + e.message);
+  }
+  ['docx-btn', 'docx-btn-top'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) { btn.textContent = '⬇ Word'; btn.disabled = false; }
+  });
+}
+
+function downloadPublishingInstructions() {
+  var agentName = agentData ? agentData.name : 'Agent';
+  var month = posts[0] ? posts[0].month : (emails[0] ? emails[0].month : '');
+  var line = '='.repeat(60);
+  var txt = line + '\n' + agentName.toUpperCase() + ' — ' + month.toUpperCase() + '\nPublishing Instructions\n' + line + '\n\n';
+
+  var allItems = posts.concat(emails);
+  allItems.forEach(function(item, i) {
+    var type = classifyContent(item);
+    var label = type === 'email' ? 'EMAIL' : type === 'video' ? 'VIDEO SCRIPT' : type === 'canva' ? 'DESIGNED POST' : 'SOCIAL POST';
+    txt += label + ' ' + (i+1) + ': ' + (item.post_title || '') + '\n';
+    txt += '-'.repeat(40) + '\n';
+    // Clean email body — strip VISUAL ASSETS
+    var copy = type === 'email' ? cleanEmailBody(item.copy || '') : (item.copy || '');
+    txt += copy + '\n';
+    // Photo link — for social/canva posts
+    if (item.selected_photo_id && !item.selected_photo_id.startsWith('[') && !item.selected_photo_id.startsWith('{')) {
+      txt += '\nPHOTO (download): https://drive.google.com/uc?export=download&id=' + item.selected_photo_id + '\n';
+      txt += 'PHOTO (view): https://drive.google.com/file/d/' + item.selected_photo_id + '/view\n';
+    }
+    // Email attached photos
+    if (type === 'email' && item.selected_photo_id && item.selected_photo_id.startsWith('[')) {
+      try {
+        var emailPhotos = JSON.parse(item.selected_photo_id);
+        if (emailPhotos.length) {
+          txt += '\nEMAIL PHOTOS:\n';
+          emailPhotos.forEach(function(p, pi) {
+            if (p.drive_file_id) {
+              txt += '  Photo ' + (pi+1) + ' (download): https://drive.google.com/uc?export=download&id=' + p.drive_file_id + '\n';
+            } else if (p.url) {
+              txt += '  Photo ' + (pi+1) + ': ' + p.url + '\n';
+            }
+          });
+        }
+      } catch(ex) {}
+    }
+    if (item.canva_link) txt += 'CANVA: ' + item.canva_link + '\n';
+    txt += '\n';
+  });
+
+  txt += line + '\nContent created by Your Marketing Dude · yourmarketingdude.com\n';
+
+  var blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = agentName.replace(/\s+/g,'-') + '-' + month.replace(/\s+/g,'-') + '-Publishing-Instructions.txt';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+  toast('Publishing instructions downloaded ✓');
+}
+
+function rebuildChip(postId) {
+  var item = posts.find(function(p){ return p.id === postId; }) || emails.find(function(e){ return e.id === postId; });
+  if (!item) return;
+  var existing = document.getElementById('chip-' + postId);
+  if (existing) {
+    var newChip = buildChip(item);
+    existing.parentNode.replaceChild(newChip, existing);
+  }
+}
+
+async function approveAllClient() {
+  console.log('approveAllClient: START — posts:', posts.length, 'emails:', emails.length, 'total:', total);
+
+  // Approve all items
+  var allIds = posts.map(function(p){ return p.id; }).concat(emails.map(function(e){ return e.id; }));
+  console.log('approveAllClient: approving', allIds.length, 'items');
+
+  for (var i = 0; i < allIds.length; i++) {
+    var item = posts.find(function(p){ return p.id === allIds[i]; }) || emails.find(function(e){ return e.id === allIds[i]; });
+    if (!item) { console.log('approveAllClient: item not found for id', allIds[i]); continue; }
+    await sb.from('generated_posts').update({ agent_status:'approved', agent_reviewed_at: new Date().toISOString() }).eq('id', allIds[i]);
+    item.agent_status = 'approved';
+  }
+
+  // Count from actual status
+  reviewed = posts.concat(emails).filter(function(it){ return it.agent_status === 'approved' || it.agent_status === 'flagged'; }).length;
+  console.log('approveAllClient: reviewed=', reviewed, 'total=', total);
+  updateProgress();
+  checkBatchCompleteAndNotify();
+
+  // Save auto-assigned photo IDs to Supabase before moving
+  var saveTasks = [];
+  posts.concat(emails).forEach(function(item) {
+    var pid = item.selected_photo_id;
+    if (pid && typeof pid === 'string' && pid.length > 10 && !pid.startsWith('[') && item.id) {
+      saveTasks.push(sb.from('generated_posts').update({ selected_photo_id: pid }).eq('id', item.id).then(function(){}).catch(function(){}));
+    }
+  });
+  if (saveTasks.length) {
+    await Promise.all(saveTasks);
+    console.log('approveAllClient: saved', saveTasks.length, 'photo IDs');
+  } else {
+    console.log('approveAllClient: no photo IDs to save — checking agentPhotos:', agentPhotos.length);
+  }
+
+  // Move photos
+  await clientTriggerMoveToUsed();
+
+  // Unlock download buttons
+  ['client-txt-btn', 'docx-btn-top', 'docx-btn'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.color = 'var(--text)'; btn.style.cursor = 'pointer'; }
+  });
+
+  buildCalendar(document.getElementById('month-badge').textContent);
+  closeLightbox();
+  toast('All approved ✓ — downloading now...');
+  setTimeout(function(){ downloadPublishingInstructions(); }, 400);
+  setTimeout(function(){ downloadWordDoc(); }, 1400);
+}
+
+// Exact mirror of VA triggerMoveToUsed — uses Supabase batch query as primary source
+async function clientTriggerMoveToUsed() {
+  if (!agentData || !agentData.photo_folder_id) {
+    console.log('clientTriggerMoveToUsed: no photo_folder_id');
+    return;
+  }
+  try {
+    // PRIMARY: query Supabase for all selected_photo_id in this batch — same as VA
+    var qr = await sb.from('generated_posts')
+      .select('selected_photo_id')
+      .eq('agent_id', agentData.id)
+      .eq('batch_id', batchId)
+      .not('selected_photo_id', 'is', null);
+
+    var fileIds = [];
+    if (!qr.error && qr.data) {
+      qr.data.forEach(function(row) {
+        var pid = row.selected_photo_id;
+        if (pid && typeof pid === 'string' && pid.length > 10 && !pid.startsWith('[') && !pid.startsWith('{')) {
+          if (!fileIds.includes(pid)) fileIds.push(pid);
+        }
+      });
+    }
+
+    // SECONDARY: from in-memory items (getChipPhoto sets selected_photo_id directly)
+    posts.concat(emails).forEach(function(item) {
+      var pid = item.selected_photo_id;
+      if (pid && typeof pid === 'string' && pid.length > 10 && !pid.startsWith('[') && !pid.startsWith('{')) {
+        if (!fileIds.includes(pid)) fileIds.push(pid);
+      }
+    });
+
+    // FALLBACK: all agent photos loaded this session were shown this month
+    if (!fileIds.length && agentPhotos.length) {
+      console.log('clientTriggerMoveToUsed: using agentPhotos fallback, count:', agentPhotos.length);
+      agentPhotos.forEach(function(ph) {
+        if (ph.drive_file_id && !fileIds.includes(ph.drive_file_id)) fileIds.push(ph.drive_file_id);
+      });
+    }
+
+    console.log('clientTriggerMoveToUsed: moving', fileIds.length, 'photo IDs');
+    if (!fileIds.length) { console.log('clientTriggerMoveToUsed: no photo IDs found'); return; }
+
+    toast('Moving ' + fileIds.length + ' photo(s) to used folder...');
+    var res = await fetch('/api/move-to-used', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ fileIds: fileIds, photoFolderId: agentData.photo_folder_id })
+    });
+    var data = await res.json();
+    if (data.moved) {
+      toast('✓ ' + data.moved + ' photo(s) moved to used folder');
+    } else if (data.error) {
+      toast('⚠ Move failed: ' + data.error.slice(0, 100));
+      console.log('clientTriggerMoveToUsed error:', data.error);
+    } else {
+      console.log('clientTriggerMoveToUsed unexpected:', data);
+    }
+  } catch(e) {
+    console.log('clientTriggerMoveToUsed exception:', e.message);
+    toast('⚠ Move error: ' + e.message);
+  }
+}
+
+// ── FEEDBACK / REWRITE ────────────────────────────────────────────────────────
+function flag(postId) {
+  var fbZone = document.getElementById('lbox-fb-' + postId);
+  if (fbZone) { fbZone.classList.add('open'); document.getElementById('lbox-ft-' + postId).focus(); }
+}
+
+async function submitFeedback(postId) {
+  var feedback = document.getElementById('lbox-ft-' + postId).value.trim();
+  if (!feedback) return;
+  var submitBtn = document.getElementById('lbox-submit-' + postId);
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Rewriting...'; }
+
+  var post = posts.find(function(p){ return p.id === postId; }) || emails.find(function(e){ return e.id === postId; });
+  if (!post || !agentData) { if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Rewrite It For Me →'; } return; }
+
+  try {
+    var dna = agentData.voice_dna || 'Warm, conversational, authentic real estate agent.';
+    var type = classifyContent(post);
+    var isEmail = type === 'email';
+
+    var prompt = 'You are rewriting content for ' + agentData.name + ' in ' + (agentData.city || 'their market') + '.\n\n' +
+      'VOICE DNA:\n' + dna + '\n\n' +
+      'CONTENT TYPE: ' + (isEmail ? 'Newsletter email' : type === 'video' ? 'Video script' : 'Social media post') + '\n' +
+      'ORIGINAL TITLE: ' + post.post_title + '\n' +
+      'CURRENT VERSION:\n' + post.copy + '\n\n' +
+      'FEEDBACK: "' + feedback + '"\n\n' +
+      (isEmail
+        ? 'CRITICAL RULES FOR EMAIL:\n' +
+          '- NEVER shorten this email. It is a newsletter and needs full length.\n' +
+          '- Keep the same structure and flow. Only change what the feedback specifically asks for.\n' +
+          '- If feedback asks about tone, adjust tone only. If it asks about a section, change only that section.\n' +
+          '- Match the length of the original exactly — same number of paragraphs.\n' +
+          '- No hyphens. No corporate language. Standard capitalization.\n\n' +
+          'Output ONLY the full rewritten email body.'
+        : 'Rewrite in their voice. 2-4 sentences for posts. No hyphens. No corporate language. Standard capitalization.\n\nOutput ONLY the new text.');
+
+    var maxTok = isEmail ? 2000 : 400;
+    var res = await fetch('/api/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ max_tokens: maxTok, messages:[{ role:'user', content: prompt }] }) });
+    var data = await res.json();
+    var newCopy = cleanCopy(data.content.map(function(b){ return b.text||''; }).join('').trim());
+
+    // Update display
+    var copyEl = document.getElementById('lbox-copy-' + postId);
+    if (copyEl) copyEl.textContent = newCopy;
+
+    // Save to DB
+    await sb.from('generated_posts').update({ copy: newCopy, agent_status:'flagged' }).eq('id', postId);
+    post.copy = newCopy;
+    post.agent_status = 'flagged';
+
+    // Log feedback
+    var wasReviewed = !!(post.agent_status);
+    await sb.from('feedback_history').insert([{
+      agent_id: agentData.id,
+      post_title: post.post_title,
+      original_copy: post.copy,
+      feedback: feedback,
+      rewritten_copy: newCopy,
+      month: post.month || '',
+      created_at: new Date().toISOString()
+    }]);
+
+    if (!wasReviewed) { reviewed++; updateProgress(); checkBatchCompleteAndNotify(); }
+
+    // Update actions — keep full edit/feedback UI so they can rewrite again
+    // Just show a status badge and keep everything else functional
+    var actEl = document.getElementById('lbox-actions-' + postId);
+    if (actEl) {
+      var type2 = classifyContent(post);
+      actEl.innerHTML = buildActionHTML(postId, 'flagged', type2);
+      // Show feedback zone open by default after rewrite so they can go again immediately
+      var fbZone2 = document.getElementById('lbox-fb-' + postId);
+      if (fbZone2) fbZone2.classList.add('open');
+      // Add status badge + approve button above feedback
+      var actRow2 = actEl.querySelector('.action-row-main');
+      if (actRow2) {
+        var statusBadge = document.createElement('span');
+        statusBadge.style.cssText = 'font-size:12px;font-weight:600;color:var(--amber);background:var(--amberbg);padding:6px 10px;border-radius:8px;';
+        statusBadge.textContent = '⚑ Rewritten';
+        var approveBtn = document.createElement('button');
+        approveBtn.className = 'act-approve';
+        approveBtn.style.cssText = 'flex:1;';
+        approveBtn.textContent = '✓ This version is good';
+        approveBtn.onclick = function(){ approve(postId); };
+        var editBtn = document.createElement('button');
+        editBtn.className = 'act-edit';
+        editBtn.textContent = '✏ Edit';
+        editBtn.onclick = function(){ toggleEdit(postId, type2 === 'email'); };
+        actRow2.innerHTML = '';
+        actRow2.appendChild(statusBadge);
+        actRow2.appendChild(approveBtn);
+        actRow2.appendChild(editBtn);
+      }
+    }
+
+    rebuildChip(postId);
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Rewrite It For Me →'; }
+    if (document.getElementById('lbox-ft-' + postId)) document.getElementById('lbox-ft-' + postId).value = '';
+
+  } catch(err) {
+    toast('Error: ' + err.message);
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Rewrite It For Me →'; }
+  }
+}
+
+// ── PHOTO SAVING ──────────────────────────────────────────────────────────────
+async function savePostPhoto(postId, fileId) {
+  // Update Supabase
+  try { await sb.from('generated_posts').update({ selected_photo_id: fileId }).eq('id', postId); } catch(e) { console.log('savePostPhoto error:', e.message); }
+  // Update in-memory item so rebuildChip shows the right photo
+  var item = posts.find(function(p){ return p.id === postId; }) || emails.find(function(e){ return e.id === postId; });
+  if (item) item.selected_photo_id = fileId;
+  // Rebuild the chip on the calendar grid with the new photo
+  rebuildChip(postId);
+  toast('Photo updated ✓');
+}
+async function savePostPhotosToDb(postOrEmailId, photosArr) {
+  try { await sb.from('generated_posts').update({ selected_photo_id: JSON.stringify(photosArr) }).eq('id', postOrEmailId); } catch(e) {}
+}
+
+// ── BROWSE ALL PHOTOS MODAL ───────────────────────────────────────────────────
+var clientEmailPhotos = {};
+
+function browseAllPhotos(targetId, isEmail) {
+  currentPhotoTarget = targetId;
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'photo-browse-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  var sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;';
+
+  var head = document.createElement('div');
+  head.style.cssText = 'padding:16px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;';
+  head.innerHTML = '<div style="font-size:15px;font-weight:600;">Choose a Photo</div>';
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'font-size:20px;background:none;border:none;cursor:pointer;color:#999;';
+  closeBtn.onclick = function(){ overlay.remove(); };
+  head.appendChild(closeBtn);
+  sheet.appendChild(head);
+
+  var body = document.createElement('div');
+  body.style.cssText = 'overflow-y:auto;padding:16px;flex:1;';
+
+  if (!agentPhotos.length) {
+    body.innerHTML = '<div style="padding:2rem;text-align:center;color:#999;font-size:14px;">No photos loaded for this agent.</div>';
+  } else {
+    var grid = document.createElement('div');
+    grid.className = 'drive-grid';
+    agentPhotos.forEach(function(ph) {
+      var item = document.createElement('div');
+      item.className = 'drive-item';
+      item.style.cursor = 'pointer';
+      var img = document.createElement('img');
+      img.src = 'https://drive.google.com/thumbnail?id=' + ph.drive_file_id + '&sz=w300';
+      img.style.cssText = 'width:100%;height:100px;object-fit:cover;display:block;background:#F0EEE9;';
+      img.onerror = function(){ this.style.background='#ddd'; };
+      item.appendChild(img);
+      (function(photo) {
+        item.onclick = function(e) {
+          e.stopPropagation();
+          savePostPhoto(currentPhotoTarget, photo.drive_file_id);
+          var mainImg = document.querySelector('.lbox-photo');
+          if (mainImg) mainImg.src = 'https://drive.google.com/thumbnail?id=' + photo.drive_file_id + '&sz=w600';
+          rebuildChip(currentPhotoTarget);
+          overlay.remove();
+          toast('Photo updated ✓');
+        };
+      })(ph);
+      grid.appendChild(item);
+    });
+    body.appendChild(grid);
+  }
+
+  sheet.appendChild(body);
+  sheet.onclick = function(e){ e.stopPropagation(); };
+  overlay.appendChild(sheet);
+  overlay.onclick = function(ev){ if (ev.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+// ── PROGRESS ─────────────────────────────────────────────────────────────────
+function updateProgress() {
+  var pct = total > 0 ? Math.round((reviewed / total) * 100) : 0;
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('prog-text').textContent = reviewed + ' of ' + total + ' reviewed';
+  if (reviewed >= total && total > 0) {
+    setTimeout(function(){ document.getElementById('done-screen').style.display = 'block'; }, 800);
+  }
+}
+
+function checkBatchCompleteAndNotify() {
+  var allItems = posts.concat(emails);
+  var allFinal = allItems.length > 0 && allItems.every(function(it){ return it.agent_status === 'approved' || it.agent_status === 'flagged'; });
+  if (!allFinal || batchNotifySent) return;
+  batchNotifySent = true;
+  try { localStorage.setItem('notified-' + batchId, '1'); } catch(e) {}
+  var approvedCount = allItems.filter(function(it){ return it.agent_status === 'approved'; }).length;
+  var flaggedCount = allItems.filter(function(it){ return it.agent_status === 'flagged'; }).length;
+  notifyVaBatchComplete(approvedCount, flaggedCount);
+}
+
+async function notifyVaBatchComplete(approvedCount, flaggedCount) {
+  if (!agentData) return;
+  try {
+    await fetch('/api/notify-va', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        agentName: agentData.name,
+        agentEmail: agentData.email,
+        batchId: batchId,
+        approvedCount: approvedCount,
+        flaggedCount: flaggedCount,
+        month: posts[0] ? posts[0].month : (emails[0] ? emails[0].month : '')
+      })
+    });
+  } catch(e) { console.log('notify VA error:', e.message); }
+
+  // Move all selected photos to the "used" folder now that the batch is fully approved
+  moveUsedPhotos();
+}
+
+// Collect every Drive photo that was selected/displayed for this batch
+// and move them to the "used" subfolder so they won't be suggested again next month.
+// Runs silently in the background — never blocks the UI.
+async function moveUsedPhotos() {
+  if (!agentData || !agentData.photo_folder_id) {
+    console.log('moveUsedPhotos: no photo_folder_id');
+    return;
+  }
+  try {
+    await new Promise(function(r){ setTimeout(r, 1000); });
+    var fileIds = [];
+    // 1. From in-memory items set by getChipPhoto on render
+    posts.concat(emails).forEach(function(item) {
+      var pid = item.selected_photo_id;
+      if (pid && typeof pid === 'string' && pid.length > 10 && !pid.startsWith('[') && !pid.startsWith('{')) {
+        if (!fileIds.includes(pid)) fileIds.push(pid);
+      }
+    });
+    // 2. From Supabase - catches lightbox photo swaps
+    var pr = await sb.from('generated_posts').select('selected_photo_id').eq('agent_id', agentData.id).eq('batch_id', batchId).not('selected_photo_id', 'is', null);
+    if (!pr.error && pr.data) {
+      pr.data.forEach(function(r) {
+        var pid = r.selected_photo_id;
+        if (pid && typeof pid === 'string' && pid.length > 10 && !pid.startsWith('[') && !fileIds.includes(pid)) fileIds.push(pid);
+      });
+    }
+    // 3. Fallback - all agent photos loaded this session were shown this month
+    if (!fileIds.length && agentPhotos.length) {
+      console.log('moveUsedPhotos: using agentPhotos fallback, count:', agentPhotos.length);
+      agentPhotos.forEach(function(ph) {
+        if (ph.drive_file_id && !fileIds.includes(ph.drive_file_id)) fileIds.push(ph.drive_file_id);
+      });
+    }
+    console.log('moveUsedPhotos: moving', fileIds.length, 'photos');
+    if (!fileIds.length) { toast('No photos to move'); return; }
+    toast('Moving ' + fileIds.length + ' photo(s) to used folder...');
+    var res = await fetch('/api/move-to-used', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ fileIds: fileIds, photoFolderId: agentData.photo_folder_id })
+    });
+    var data = await res.json();
+    if (data.moved) {
+      toast('✓ ' + data.moved + ' photo(s) moved to used folder');
+    } else if (data.error) {
+      toast('⚠ Move failed: ' + data.error.slice(0, 100));
+      console.log('moveUsedPhotos error:', data.error);
+    } else if (data.results) {
+      var ok = (data.results||[]).filter(function(r){return r.success;}).length;
+      toast(ok ? '✓ ' + ok + ' photo(s) moved' : '⚠ Move failed');
+    } else {
+      console.log('moveUsedPhotos unexpected:', data);
+    }
+  } catch(e) {
+    console.log('moveUsedPhotos exception:', e.message);
+    toast('⚠ Move error: ' + e.message);
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+async function clientScanPhotos() {
+  if (!agentData || !agentData.photo_folder_id) { toast('No photo folder configured'); return; }
+  var btn = document.getElementById('scan-btn-client');
+  var status = document.getElementById('scan-status-client');
+  var results = document.getElementById('scan-results-client');
+  if (btn) { btn.textContent = 'Scanning...'; btn.disabled = true; }
+  if (status) status.textContent = 'Scanning your photo library...';
+  if (results) results.innerHTML = '';
+  try {
+    var res = await fetch('/api/analyze-photos', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ folderId: agentData.photo_folder_id, count: 5, maxPhotos: 5, voiceDna: agentData.voice_dna || '', agentName: agentData.name, agentCity: agentData.city || '', excludeFileIds: [] })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.posts || !data.posts.length) {
+      if (status) status.textContent = 'No usable photos found. Make sure your folder has JPG or PNG images.';
+      if (btn) { btn.textContent = 'Scan Again'; btn.disabled = false; }
+      return;
+    }
+    var usable = data.posts.filter(function(p){ return !p.skipped; });
+    var skipped = data.posts.filter(function(p){ return p.skipped; }).length;
+    if (status) status.textContent = 'Found ' + (data.totalPhotos||0) + ' photos analyzed ' + (data.analyzed||usable.length) + (skipped ? ' ' + skipped + ' skipped (HEIC convert to JPG)' : '');
+    if (!usable.length) { if (btn) { btn.textContent = 'Scan Again'; btn.disabled = false; } return; }
+    var label = document.createElement('div');
+    label.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);margin-bottom:10px;margin-top:8px;';
+    label.textContent = usable.length + ' Photo Post' + (usable.length > 1 ? 's' : '') + ' Ready - Edit any, then add to calendar';
+    results.appendChild(label);
+    usable.forEach(function(p, idx) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:flex-start;gap:12px;padding:10px;background:var(--bg);border-radius:10px;margin-bottom:8px;';
+      var chk = document.createElement('input');
+      chk.type = 'checkbox'; chk.checked = true; chk.id = 'cscan-chk-' + idx;
+      chk.style.cssText = 'width:16px;height:16px;margin-top:4px;cursor:pointer;flex-shrink:0;';
+      var thumb = document.createElement('img');
+      thumb.src = p.thumbnailUrl || ('https://drive.google.com/thumbnail?id=' + (p.fileId||p.drive_file_id) + '&sz=w100');
+      thumb.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#eee;';
+      var bodyDiv = document.createElement('div'); bodyDiv.style.cssText = 'flex:1;';
+      var desc = document.createElement('div'); desc.style.cssText = 'font-size:11px;color:var(--t3);margin-bottom:4px;';
+      desc.textContent = p.description || '';
+      var cap = document.createElement('div'); cap.contentEditable = 'true';
+      cap.style.cssText = 'font-size:13px;line-height:1.6;color:var(--text);outline:none;border-bottom:1px dashed var(--border);padding-bottom:4px;';
+      cap.textContent = p.suggestedPost || '';
+      bodyDiv.appendChild(desc); bodyDiv.appendChild(cap);
+      row.appendChild(chk); row.appendChild(thumb); row.appendChild(bodyDiv);
+      results.appendChild(row);
+      p._capEl = cap; p._fileId = p.fileId || p.drive_file_id;
+    });
+    var btnRow = document.createElement('div'); btnRow.style.cssText = 'display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;';
+    var addBtn = document.createElement('button');
+    addBtn.style.cssText = "font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 20px;background:var(--green);color:#fff;border:none;border-radius:10px;cursor:pointer;";
+    addBtn.textContent = 'Add selected to content';
+    addBtn.onclick = function() {
+      var added = 0;
+      usable.forEach(function(p, idx) {
+        var chk2 = document.getElementById('cscan-chk-' + idx);
+        if (chk2 && chk2.checked) {
+          var copy = p._capEl ? p._capEl.innerText.trim() : (p.suggestedPost || '');
+          var newPost = { id: 'scan-' + Date.now() + '-' + idx, post_title: 'Photo Post ' + (idx+1), copy: copy, post_type: 'post', selected_photo_id: p._fileId, agent_status: null, month: posts[0] ? posts[0].month : '' };
+          posts.push(newPost);
+          if (sb) sb.from('generated_posts').insert([{ agent_id: agentData.id, batch_id: batchId, post_type: 'post', post_title: newPost.post_title, copy: copy, selected_photo_id: p._fileId, month: newPost.month, va_status: 'pending', agent_status: null, created_at: new Date().toISOString() }]).then(function(){});
+          added++;
+        }
+      });
+      buildCalendar(document.getElementById('month-badge').textContent);
+      results.innerHTML = '';
+      if (status) status.textContent = added + ' photo post' + (added > 1 ? 's' : '') + ' added to your content calendar.';
+      toast(added + ' post' + (added > 1 ? 's' : '') + ' added');
+    };
+    btnRow.appendChild(addBtn);
+    results.appendChild(btnRow);
+  } catch(e) {
+    if (status) status.textContent = 'Scan failed: ' + e.message;
+    toast('Scan error: ' + e.message);
+  }
+  if (btn) { btn.textContent = 'Scan Again'; btn.disabled = false; }
+}
+
+</script>
+</body>
+</html>

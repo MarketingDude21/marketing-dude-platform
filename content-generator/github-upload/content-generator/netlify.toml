@@ -1,0 +1,57 @@
+[build]
+  functions = "netlify/functions"
+  command = "npm install"
+
+[[redirects]]
+  from = "/api/generate"
+  to = "/.netlify/functions/generate"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/send-review"
+  to = "/.netlify/functions/send-review"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/drive-photos"
+  to = "/.netlify/functions/drive-photos"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/local-photos"
+  to = "/.netlify/functions/local-photos"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/content-calendar"
+  to = "/.netlify/functions/content-calendar"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/generate-docx"
+  to = "/.netlify/functions/generate-docx"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/move-to-used"
+  to = "/.netlify/functions/move-to-used"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/analyze-photos"
+  to = "/.netlify/functions/analyze-photos"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/notify-va"
+  to = "/.netlify/functions/notify-va"
+  status = 200
+  force = true
