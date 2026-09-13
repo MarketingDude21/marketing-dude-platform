@@ -1,0 +1,7 @@
+[build]
+  publish = "database-cleanup"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
